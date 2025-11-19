@@ -1,0 +1,99 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_HOSTS 100
+#define QUEUE_SIZE 100
+
+int queueArr[QUEUE_SIZE];
+int front = 0, rear = 0;
+
+void enqueue(int v) {
+    if (rear == QUEUE_SIZE) {
+        printf("Queue overflow\n");
+        return;
+    }
+    queueArr[rear++] = v;
+}
+
+int dequeue() {
+    if (front == rear) {
+        // empty
+        return -1;
+    }
+    return queueArr[front++];
+}
+
+int isEmpty() {
+    return (front == rear);
+}
+
+void bfs(int adj[MAX_HOSTS][MAX_HOSTS], int numHosts, int start) {
+    int visited[MAX_HOSTS] = {0};
+    int parent[MAX_HOSTS];
+    for (int i = 0; i < numHosts; ++i) parent[i] = -1;
+
+    // reset queue pointers for safety (in case of multiple runs)
+    front = rear = 0;
+
+    enqueue(start);
+    visited[start] = 1;
+    parent[start] = -1; // start has no parent
+
+    printf("\nBroadcast tree (BFS order):\n");
+    while (!isEmpty()) {
+        int current = dequeue();
+        if (current == -1) break;
+        printf("%d ", current);
+
+        for (int i = 0; i < numHosts; ++i) {
+            if (adj[current][i] == 1 && !visited[i]) {
+                enqueue(i);
+                visited[i] = 1;
+                parent[i] = current; // parent in broadcast tree
+            }
+        }
+    }
+
+    printf("\n\nBroadcast tree edges (parent -> child):\n");
+    for (int i = 0; i < numHosts; ++i) {
+        if (i == start) continue;
+        if (parent[i] != -1)
+            printf("%d -> %d\n", parent[i], i);
+        else
+            printf("No parent for %d (unreachable from start)\n", i);
+    }
+    printf("\n");
+}
+
+int main() {
+    int numHosts;
+    int adj[MAX_HOSTS][MAX_HOSTS];
+    int startHost;
+
+    printf("Enter the number of hosts in the subnet: ");
+    if (scanf("%d", &numHosts) != 1 || numHosts <= 0 || numHosts > MAX_HOSTS) {
+        printf("Invalid number of hosts (1..%d)\n", MAX_HOSTS);
+        return 1;
+    }
+
+    printf("Enter adjacency matrix (0 for no connection, 1 for connection):\n");
+    for (int i = 0; i < numHosts; ++i) {
+        for (int j = 0; j < numHosts; ++j) {
+            if (scanf("%d", &adj[i][j]) != 1) {
+                printf("Invalid matrix input\n");
+                return 1;
+            }
+        }
+    }
+
+    printf("Enter the starting host for the broadcast tree (0 to %d): ", numHosts - 1);
+    if (scanf("%d", &startHost) != 1 || startHost < 0 || startHost >= numHosts) {
+        printf("Invalid start host\n");
+        return 1;
+    }
+
+    bfs(adj, numHosts, startHost);
+
+    return 0;
+}
+
